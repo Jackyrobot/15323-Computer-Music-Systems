@@ -1,0 +1,27 @@
+debug.srp created srp.log for error report...
+runtime exception handler called
+exception is: expected String or Array
+frame variables: {}
+frame pc: -1
+frame method: <callin_method>
+frame class: nil
+
+Debugger invoked.
+-----------------------------------------------------
+Method <callin_method> in class nil
+-----------------------------------------------------
+Method <immediate command 0> in class nil, char 4348 in file 
+    C:\Users\jacky\Documents\CMU\15-323 Computer Music Systems\project5\p5\player\playermain.srp
+Frame variables: {i: 0, tm_file_path: "tetris.csv", tmp_tm: <obj@00000243388325A0>}
+ 148:     tmp_tm.read(tm_file_path)
+                                   ^
+-----------------------------------------------------
+Method read in class TransitionMatrix, char 6964 in file 
+    C:\Users\jacky\Documents\CMU\15-323 Computer Music Systems\project5\p5\player\../transition_matrix.srp
+Frame variables: {filename: "tetris.csv", temp_data: nil, headers: nil, temp_mat: nil, i: nil, pitch: nil, header: nil, parse: nil, dur: nil, j: nil}
+ 206:         var headers = temp_data[0]
+                                     ^
+-----------------------------------------------------
+Method <callin_method> in class nil
+expected String or Array
+1> Exiting ...

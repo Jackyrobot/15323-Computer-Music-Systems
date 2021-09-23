@@ -1,0 +1,51 @@
+debug.srp created srp.log for error report...
+runtime exception handler called
+exception is: bad key
+frame variables: {}
+frame pc: -1
+frame method: <callin_method>
+frame class: nil
+
+Debugger invoked.
+-----------------------------------------------------
+Method <callin_method> in class nil
+-----------------------------------------------------
+Method sched_poll in class nil, char 7354 in file 
+    C:\Program Files\Serpent\lib\sched.srp
+Frame variables: {time: 2.164, period: nil}
+ 169:     rtsched.poll(time)
+                      ^
+-----------------------------------------------------
+Method poll in class Scheduler, char 12401 in file 
+    C:\Program Files\Serpent\lib\sched.srp
+Frame variables: {when: 2.164, event: [0.466, <obj@000001AFFA8F6D80>, 'activate', []], target: <obj@000001AFFA8F6D80>, message: 'activate', parms: []}
+ 304:             general_apply(target, message, parms)
+                               ^
+-----------------------------------------------------
+Method general_apply in class nil, char 28059 in file 
+    C:\Program Files\Serpent\lib\sched.srp
+Frame variables: {target: <obj@000001AFFA8F6D80>, message: 'activate', parms: []}
+ 683:         sendapply(target, message, parms)
+                                               ^
+-----------------------------------------------------
+Method activate in class Vscheduler, char 20825 in file 
+    C:\Program Files\Serpent\lib\sched.srp
+Frame variables: {event: [1.266, nil, 'activity', [0, 0, "", ""]], target: nil, message: 'activity', parms: [0, 0, "", ""]}
+ 519:             general_apply(target, message, parms)
+                               ^
+-----------------------------------------------------
+Method general_apply in class nil, char 28098 in file 
+    C:\Program Files\Serpent\lib\sched.srp
+Frame variables: {target: nil, message: 'activity', parms: [0, 0, "", ""]}
+ 685:         apply(message, parms)
+                                   ^
+-----------------------------------------------------
+Method activity in class nil, char 1125 in file 
+    C:\Users\Jacky\Documents\CMU\15-323 Computer Music Systems\hw2\init.srp
+Frame variables: {id: 0, p: 0, note: "", chord: "", vel: nil}
+  53:     note_t = NOTES[note]
+                        ^
+-----------------------------------------------------
+Method <callin_method> in class nil
+bad key
+1> Exiting ...

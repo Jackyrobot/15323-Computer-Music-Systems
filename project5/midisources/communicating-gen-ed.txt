@@ -1,0 +1,119 @@
+Communicating
+GenEd
+Category	Dept	Course #	Title	Prereq	Coreq	Notes
+Communicating	CFA Interdisciplinary	62-150	Introduction to Media Synthesis and Analysis	N	N	
+Communicating	Economics	73-270	Strategic Professional Communications for Economics	Y	N	
+Communicating	Engineering and Public Policy	19-325	Technology and Policy Writing for Lay Audiences	N	N	
+Communicating	English	76-100	Reading and Writing in an Academic Context	N	N	
+Communicating	English	76-101	Interpretation and Argument	N	N	
+Communicating	English	76-270	Writing for the Professions	N	N	
+Communicating	English	76-272	Language in Design	N	N	
+Communicating	English	76-273	Presenting a Public Self	Y	N	
+Communicating	English	76-275	Critical Writing Workshop	Y	N	
+Communicating	English	76-285	Team Communication	Y	N	
+Communicating	English	76-286	Oral Communication	Y	N	
+Communicating	English	76-318	Communicating in the Global Marketplace	N	N	
+Communicating	English	76-321	History of the British Novel	Y	N	
+Communicating	English	76-325	Intertextuality	Y	N	
+Communicating	English	76-355	Leadership, Dialogue and Change (CL 76-755)	Y	N	
+Communicating	English	76-357	Language, Power and the Law	N	N	
+Communicating	English	76-366	Symphonic Poetry: Art of Journaling and Revision	Y	N	
+Communicating	English	76-372	News Writing (CL 76-772)	Y	N	
+Communicating	English	76-378	Literacy: Educational Theory & Community Practice	N	N	
+Communicating	English	76-385	Introduction to Discourse Analysis (CL 76-785)	Y	N	
+Communicating	English	76-386	Language and Culture	N	N	
+Communicating	English	76-387	Sociolinguistics	N	N	
+Communicating	English	76-389	Rhetorical Grammar (CL 76-789)	Y	N	
+Communicating	English	76-393	Rhetorical Traditions	N	N	
+Communicating	English	76-395	Science Writing	Y	N	
+Communicating	English	76-396	Non-Profit Advocacy: Genres, Methods, and Issues	Y	N	
+Communicating	English	76-427	Research Writing Pedagogy	Y	N	
+Communicating	English	76-428	Visual Verbal Communication	Y	N	
+Communicating	English	76-474	Software Documentaries	Y	N	
+Communicating	English	76-475	Law, Performance, and Identity	N	N	
+Communicating	English	76-476	Rhetoric of Science	Y	N	
+Communicating	English	76-481	Introduction to Multimedia Design	Y	N	
+Communicating	English	76-491	Rhetorical Analysis	Y	N	
+Communicating	English	76-494	Healthcare Communication (CL 76794)	Y	N	
+Communicating	Institute for Politics and Strategy	84-250	Writing for Political Science and Policy	N	N	
+Communicating	Institute for Politics and Strategy	84-343	Language and Power: How to Understand and Use Political Speech	N	N	Open only to Washington Semester Program students
+Communicating	Modern Languages	82-101	Elementary French I	N	N	
+Communicating	Modern Languages	82-102	Elementary French II	Y	N	
+Communicating	Modern Languages	82-103	Elementary French I online	N	N	
+Communicating	Modern Languages	82-104	Elementary French II online	Y	N	
+Communicating	Modern Languages	82-111	Elementary Arabic I	N	N	
+Communicating	Modern Languages	82-112	Elementary Arabic II	N	N	
+Communicating	Modern Languages	82-114	Beginning Arabic for Global Exchange	N	N	
+Communicating	Modern Languages	82-115	Arabic for Oral Communication	N	N	
+Communicating	Modern Languages	82-117	Arabic Conversation & Dialect I	N	N	
+Communicating	Modern Languages	82-118	Arabic Conversation & Dialect II	Y	N	
+Communicating	Modern Languages	82-121	Elementary German I	N	N	
+Communicating	Modern Languages	82-122	Elementary German II	Y	N	
+Communicating	Modern Languages	82-123	Directed Language Study: Elementary German I & II	N	N	
+Communicating	Modern Languages	82-131	Elementary Chinese I	N	N	
+Communicating	Modern Languages	82-132	Elementary Chinese II	Y	N	
+Communicating	Modern Languages	82-133	Elementary Chinese Online I	N	N	
+Communicating	Modern Languages	82-134	Elementary Chinese Online II	Y	N	
+Communicating	Modern Languages	82-135	Elementary Chinese for Heritage Students	N	N	
+Communicating	Modern Languages	82-141	Elementary Spanish I	N	N	
+Communicating	Modern Languages	82-142	Elementary Spanish II	Y	N	
+Communicating	Modern Languages	82-143	Elementary Spanish I Online	N	N	
+Communicating	Modern Languages	82-144	Elementary Spanish II Online	Y	N	
+Communicating	Modern Languages	82-161	Elementary Italian I	N	N	
+Communicating	Modern Languages	82-162	Elementary Italian II	Y	N	
+Communicating	Modern Languages	82-163	Directed Language Study: Elementary Italian I or II	N	N	
+Communicating	Modern Languages	82-171	Elementary Japanese I	N	N	
+Communicating	Modern Languages	82-172	Elementary Japanese II	Y	N	
+Communicating	Modern Languages	82-173	Introduction to Japanese I	N	N	
+Communicating	Modern Languages	82-174	Introduction to Japanese II	N	N	
+Communicating	Modern Languages	82-191	Elementary Russian I	N	N	
+Communicating	Modern Languages	82-192	Elementary Russian II	Y	N	
+Communicating	Modern Languages	82-201	Intermediate French I	Y	N	
+Communicating	Modern Languages	82-202	Intermediate French II	Y	N	
+Communicating	Modern Languages	82-211	Intermediate Arabic I	Y	N	
+Communicating	Modern Languages	82-212	Intermediate Arabic II	Y	N	
+Communicating	Modern Languages	82-221	Intermediate German I	Y	N	
+Communicating	Modern Languages	82-222	Intermediate German II	Y	N	
+Communicating	Modern Languages	82-231	Intermediate Chinese I	Y	N	
+Communicating	Modern Languages	82-232	Intermediate Chinese II	Y	N	
+Communicating	Modern Languages	82-235	Intensive Intermediate Chinese	Y	N	
+Communicating	Modern Languages	82-241	Intermediate Spanish I	Y	N	
+Communicating	Modern Languages	82-242	Intermediate Spanish II	Y	N	
+Communicating	Modern Languages	82-261	Intermediate Italian I	Y	N	
+Communicating	Modern Languages	82-262	Intermediate Italian II	Y	N	
+Communicating	Modern Languages	82-271	Intermediate Japanese I	Y	N	
+Communicating	Modern Languages	82-272	Intermediate Japanese II	Y	N	
+Communicating	Modern Languages	82-280	Learning about Language Learning	N	Y	
+Communicating	Modern Languages	82-291	Intermediate Russian I	Y	N	
+Communicating	Modern Languages	82-292	Intermediate Russian II	Y	N	
+Communicating	Modern Languages	82-331	Advanced Chinese I	Y	N	
+Communicating	Modern Languages	82-332	Advanced Chinese II	Y	N	
+Communicating	Modern Languages	82-334	Structure of Chinese	Y	N	
+Communicating	Modern Languages	82-335	Selected Readings in Chinese	Y	N	
+Communicating	Modern Languages	82-337	Chinese for Oral Communication I	Y	N	
+Communicating	Modern Languages	82-338	Chinese for Oral Communication II	Y	N	
+Communicating	Modern Languages	82-372	Advanced Japanese II	Y	N	
+Communicating	Modern Languages	82-373	Structure of the Japanese Language	N	N	
+Communicating	Modern Languages	82-374	Technical Japanese	Y	N	
+Communicating	Modern Languages	82-383	Introduction to Second Language Acquisition	N	N	
+Communicating	Modern Languages	82-391	Advanced Russian I	Y	N	
+Communicating	Modern Languages	82-392	Advanced Russian II	Y	N	
+Communicating	Modern Languages	82-394	Russian for Heritage Speakers: Babushka's Russia, and Beyond	N	N	
+Communicating	Modern Languages	82-436	Introduction to Classical Chinese	Y	N	
+Communicating	Modern Languages	82-443	Spanish Reading and Translation Workshop	Y	N	
+Communicating	Modern Languages	82-444	The Structure of Spanish	Y	N	
+Communicating	Philosophy	80-180	The Nature of Language	N	N	
+Communicating	Philosophy	80-280	Linguistic Analysis	Y	N	
+Communicating	Philosophy	80-281	Language and Thought	N	N	
+Communicating	Philosophy	80-282	Phonetics and Phonology (CL 80782)	Y	N	
+Communicating	Philosophy	80-283	It Matters How You Say It	N	N	
+Communicating	Philosophy	80-285	Natural Language Syntax	N	N	
+Communicating	Philosophy	80-286	Words and Word Formation: Introduction to Morphology	Y	N	
+Communicating	Philosophy	80-287	Historical & Comparative Linguistics			
+Communicating	Philosophy	80-380	Philosophy of Language	Y	N	
+Communicating	Philosophy	80-381	Meaning in Language	Y	N	
+Communicating	Philosophy	80-383	Language in Use	Y	N	
+Communicating	Philosophy	80-384	Linguistics of Turkic Languages			
+Communicating	Philosophy	80-385	Linguistics of Germanic Languages	N	N	
+Communicating	Social and Decision Sciences	88-418	Domestic Negotiation	N	N	Some seats are reserved for students in SDS.
+Communicating	Social and Decision Sciences	88-419	International Negotiations	N	N	

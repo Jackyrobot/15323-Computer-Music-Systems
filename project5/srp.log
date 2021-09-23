@@ -1,0 +1,21 @@
+debug.srp created srp.log for error report...
+runtime exception handler called
+exception is: undefined field
+frame variables: {}
+frame pc: -1
+frame method: <callin_method>
+frame class: nil
+
+Debugger invoked.
+-----------------------------------------------------
+Method <callin_method> in class nil
+-----------------------------------------------------
+Method <immediate command 0> in class nil, char 1555 in file 
+    C:\Users\jacky\Documents\CMU\15-323 Computer Music Systems\project5\p5\test2.srp
+Frame variables: {track: [<obj@0000018F560DD018>, <obj@0000018F560DC928>, <obj@0000018F560E0E40>, <obj@0000018F560E0878>, <obj@0000018F560E4A70>, <obj@0000018F560E45E8>, <obj@0000018F560E8890>, <obj@0000018F560E8480>, <obj@0000018F560EC9B8>, <obj@0000018F560EB4E8>, <obj@0000018F560EE4E0>, <obj@0000018F560EE2E8>, <obj@0000018F560F6B38>, <obj@0000018F560FAFF0>, <obj@0000018F560FADF0>, <obj@0000018F560FF4B8>, <obj@0000018F560FF208>, <obj@0000018F56103618>, <obj@0000018F56103370>, <obj@0000018F56102DF0>, <obj@0000018F56102B48>, <obj@0000018F561023F0>, <obj@0000018F56102368>, <obj@0000018F56101218>, <obj@0000018F56100EF0>, <obj@0000018F560FED08>, <obj@0000018F560FE688>, <obj@0000018F560FDFA8>, <obj@0000018F560FDCB0>, <obj@0000018F560FC020>, <obj@0000018F560FB028>, <obj@0000018F560FAE28>, <obj@0000018F560FAA38>, <obj@0000018F560FA8A8>, <obj@0000018F560FA5C8>, <obj@0000018F560FA458>, <obj@0000018F560F9D78>, <obj@0000018F560F90D8>, <obj@0000018F560F8A40>, <obj@0000018F560F8070>, <obj@0000018F560F6B70>, <obj@0000018F560F6478>, <obj@0000018F560F5F60>, <obj@0000018F560F5A58>, <obj@0000018F560F5608>, <obj@0000018F560F4E68>, <obj@0000018F560EF068>, <obj@0000018F560EE320>, <obj@0000018F560EDD30>, <obj@0000018F560ED280>, ...], tr: 1, note: <obj@0000018F56103618>}
+  75:             time_sleep(note.duration)
+                                  ^
+-----------------------------------------------------
+Method <callin_method> in class nil
+undefined field
+1> Exiting ...

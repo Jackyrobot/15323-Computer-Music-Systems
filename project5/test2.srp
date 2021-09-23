@@ -1,0 +1,99 @@
+require "debug"
+require "allegro"
+require "mfread"
+
+count = {
+    "C" : 0,
+    "C#" : 0,
+    "D" : 0,
+    "D#" : 0,
+    "E" : 0,
+    "F" : 0,
+    "F#" : 0,
+    "G" : 0,
+    "G#" : 0,
+    "A" : 0,
+    "A#" : 0,
+    "B" : 0
+    }
+
+NOTES = {
+    0 : "C",
+    1 : "C#",
+    2 : "D",
+    3 : "D#",
+    4 : "E",
+    5 : "F",
+    6 : "F#",
+    7 : "G",
+    8 : "G#",
+    9 : "A",
+    10 : "A#",
+    11 : "B"
+}
+
+total = 0
+
+def warning(msg)
+    print "*** "; msg
+
+midi_file_path = wxs_file_selector("Open a Standard MIDI File", 
+                         "", "", ".mid", "*.mid", WXS_FILE_OPEN, 0)
+print "Opening", midi_file_path
+seq = allegro_smf_read(midi_file_path)
+if not seq
+    print "Could not read", midi_file_path
+    exit()
+
+# convert seq times to beats
+seq.convert_to_beats()
+# to get seconds: seq.convert_to_seconds()
+
+# def midi_note_on(midi, chan, key, loud)
+#     chan = chan & 15
+#     midi_write(midi, 0, chr(0x90 + chan) + chr(key) + chr(loud))
+
+# midi_out = midi_create() // create an unopened PortMidi stream
+# midi_dev = midi_out_default() // find default device number
+
+# print the notes in seq
+def show_note(note)
+    # print "time: "; note.time; " chan: "; note.chan; 
+    # print " keyno: "; NOTES[note.key % 12]; " vel: "; note.loud
+    
+    count[NOTES[note.key % 12]] = count[NOTES[note.key % 12]] + 1
+    total = total + 1
+
+
+
+for track at tr in seq.tracks
+    print "TRACK", tr
+    for note in track
+        if isinstance(note, Alg_note)
+            show_note(note)
+            # print "chan: %d key: %d loud: %d", note.chan, note.key, note.loud
+            # midi_note_on(midi_out, note.chan, note.key, note.loud)
+            # time_sleep(note.time) 
+
+
+    print count
+    print total
+    count = {
+    "C" : 0,
+    "C#" : 0,
+    "D" : 0,
+    "D#" : 0,
+    "E" : 0,
+    "F" : 0,
+    "F#" : 0,
+    "G" : 0,
+    "G#" : 0,
+    "A" : 0,
+    "A#" : 0,
+    "B" : 0
+    }
+    total = 0
+
+
+exit()
+

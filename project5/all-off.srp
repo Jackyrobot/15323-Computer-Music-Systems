@@ -1,0 +1,16 @@
+# all-off -- turn off all midi notes
+
+require "debug"
+require "midi"
+
+def all_off()
+    midi_init()
+    for ch = 0 to 16
+        midi_write(midi_out, 0, chr(midi_status_control + ch) +
+                   chr(midi_alloff) + chr(0))
+    // sleep to make sure controls are delivered
+    time_sleep(0.1)
+    midi_finish()
+
+all_off()
+exit()

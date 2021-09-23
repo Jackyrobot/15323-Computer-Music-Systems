@@ -1,0 +1,288 @@
+# playermain.srp
+
+# DESIGN:
+# This is the main base of the code that handles the playing.
+# It takes in 3 songs of different genres as .mid files (hardcoded) and mixes them to generate Markov matrices.
+# All of the manual control is handled here as well with touchOSC. 
+# The actual playing code is mostly done in the play_a_measure function.
+# This code is based off of RBD's playerdemo.srp.
+
+
+# IMPORTANT: SERVICE must be defined before you load playerbase.srp:
+SERVICE = "doo_dogs"
+
+# Now load playerbase.srp
+require "playerbase"
+
+require "debug"
+require "wxserpent"
+require "sched"
+require "midi-io"
+require "prefs"
+require "mididevice"
+require "slider"
+
+require "prob"
+require "mfread"
+require "../transition_matrix"
+
+val1 = -1 # val1 and val2 are used to determine which songs to mix into the matrix, ranging from 0 to 2.
+val2 = -1
+weight1 = 0.5 # float ranging from 0 to 1. gray slider in the bottom middle.
+weight2 = 1 - weight1
+octaveshift = 4 # this is an int ranging from 0 to 9 determined by the touchosc slider. Left slider in the middle 4
+drag_factor = 1.5
+vol_sd = 15 # for selecting volume
+instrument = 4 # for selecting instrument
+
+///////////////////////////////////
+//Touch osc code
+///////////////////////////////////
+
+PORT = 8213
+
+# make a full path with SERVICE prefix
+def full(osc_path)
+    # make a full O2 path based on SERVICE
+    return "/" + SERVICE + osc_path
+
+def install_handlers()
+    o2_method_new(full("/2/multitoggle1/4/1"), "f", 'button1', true)
+    o2_method_new(full("/2/multitoggle1/3/1"), "f", 'button2', true)
+    o2_method_new(full("/2/multitoggle1/2/1"), "f", 'button3', true)
+    o2_method_new(full("/2/multitoggle2/4/1"), "f", 'button4', true)
+    o2_method_new(full("/2/multitoggle2/3/1"), "f", 'button5', true)
+    o2_method_new(full("/2/multitoggle2/2/1"), "f", 'button6', true)
+    o2_method_new(full("/faderM"), "f", 'weightslider', true)
+    o2_method_new(full("/multifaderM/1"), "f", 'octaveslider', true)
+    o2_method_new(full("/multifaderM/2"), "f", 'dragslider', true)
+    o2_method_new(full("/multifaderM/3"), "f", 'sdslider', true)
+    o2_method_new(full("/2/multitoggle3/4/1"), "f", 'button7', true)
+    o2_method_new(full("/2/multitoggle3/3/1"), "f", 'button8', true)
+    o2_method_new(full("/2/multitoggle3/2/1"), "f", 'button9', true)
+
+#buttons 1-6 are used for selecting which songs to mix into markov.
+def button1(timestamp, address, types, val) 
+    if val == 1:
+        val1 = 0
+    else:
+        val1 = -1
+    print val1
+def button2(timestamp, address, types, val) 
+    if val == 1:
+        val1 = 1
+    else:
+        val1 = -1
+    print val1
+def button3(timestamp, address, types, val) 
+    if val == 1:
+        val1 = 2
+    else:
+        val1 = -1
+    print val1
+def button4(timestamp, address, types, val) 
+    if val == 1:
+        val2 = 0
+    else:
+        val2 = -1
+    print val2
+def button5(timestamp, address, types, val) 
+    if val == 1:
+        val2 = 1
+    else:
+        val2 = -1
+    print val2
+def button6(timestamp, address, types, val) 
+    if val == 1:
+        val2 = 2
+    else:
+        val2 = -1
+    print val2
+
+def weightslider(timestamp, address, types, val)
+    if(val < 0.01) # used to fix the issue of breaking at 0 and 1. 
+        val = 0.01
+    if(val > 0.99)
+        val = 0.99
+
+    weight1 = val
+    print "Mixing weight:", weight1
+
+def octaveslider(timestamp, address, types, val)
+    octaveshift = int(val*9)
+    print "Octave shift:", octaveshift
+
+def dragslider(timestamp, address, types, val)
+    drag_factor = 1.0 + val
+    print "Drag factor:", drag_factor
+
+def sdslider(timestamp, address, types, val)
+    vol_sd = 30 * val
+    print "Vol std. dev.:", vol_sd
+
+def button7(timestamp, address, types, val) # Electric piano 1
+    instrument = 4
+def button8(timestamp, address, types, val) # Voice Oohs
+    instrument = 53
+def button9(timestamp, address, types, val) # blow bottle
+    instrument = 76
+
+install_handlers()
+rslt = o2_osc_port_new(SERVICE, PORT, false)
+if rslt != 0 // an error occurred
+    display "in int.srp, o2_osc_port_new returned ERROR", rslt
+
+
+///////////////////////////////////////////////////////////////////
+// Markov Stuff
+///////////////////////////////////////////////////////////////////
+
+TM_FILES = ["tetris.csv", "usanthem.csv", "anotherlovesong.csv"]
+
+# Associated names of transition matrices
+TM_NAMES = ["Game", "Classical", "Rock"]
+
+# Populated with actual transition matrices
+TM_LIST = []
+
+# Loading of precomputed transition matrices
+for i = 0 to len(TM_NAMES):
+    # var tm_file_path = wxs_file_selector("Open a Transition Matrix for " + type_name,
+    #                          "", "", ".csv", "*.csv", WXS_FILE_OPEN, 0)
+    var tm_file_path = TM_FILES[i]
+    var tmp_tm = TransitionMatrix()
+    tmp_tm.read(tm_file_path)
+    TM_LIST.append(tmp_tm)
+
+print "Loaded transition matrices!"
+
+def get_current_tm():
+    # NOTE: Return the first matrix by default
+    if (val1 == -1 and val2 == -1)
+        return TM_LIST[0]
+    # There are one or two styles selected by user in TouchOSC
+    # If one, just return the matrix for that style
+    if (val1 != -1 and val2 == -1)
+        print "Only using ", TM_NAMES[val1]
+        return TM_LIST[val1]
+    elif (val1 == -1 and val2 != -1)
+        print "Only using ", TM_NAMES[val2]
+        return TM_LIST[val2]
+    # If two, use tm1.combine(tm2, CURR_WEIGHT) where CURR_WEIGHT comes from TouchOSC too
+    else
+        var tm1 = TM_LIST[val1]
+        var tm2 = TM_LIST[val2]
+        print "Mixing", TM_NAMES[val1], "and", TM_NAMES[val2], "with weight", weight1
+        return tm1.combine(tm2, weight1)
+
+def get_current_octave():
+    return octaveshift
+
+def get_current_drag_factor():
+    return drag_factor
+
+def get_next_state(tm, state):
+    var curr_idx = tm.state_to_idx(state)
+    var mat = tm.mat
+    var next_idx = pr_markov_next(curr_idx, mat)
+    var next_state = tm.idx_to_state(next_idx)
+    return next_state
+
+def pick_starting_dur(tm, pitch):
+    durs = []
+
+    for dur in tm.durs:
+        var idx = tm.state_to_idx([pitch, dur])
+        if sum_row(tm.mat[idx]) >= 1.0:
+            durs.append(dur)
+
+    return pr_choice(durs)
+
+def pick_starting_pitch(tm, cur_scale):
+    pitches = []
+    for pitch = 0 to 12:
+        if cur_scale[pitch] and tm.pitch_can_transition(pitch):
+            pitches.append(pitch)
+    return pr_choice(pitches)
+
+PITCH_MAP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+def play_a_measure()
+    # compute a measure using these variables:
+    #    cur_style - a symbol representing style to play (if
+    #       this is not your style, do not play)
+    #    cur_start_beat - what beat to start on if you are stopped
+    #    cur_stop_beat - what beat to stop on if you have started (you can
+    #       stop slightly late; generally you should not start any notes 
+    #       at or after tm_stop_beat but you can play a short note on 
+    #       tm_stop_beat if it is stylistically sensible.)
+    #    cur_beats_per_measure - the current time signature as an integer
+    #    cur_bps - current beats per second (the vtsched will implement this
+    #       but reading the vtsched timemap slope is not reliable because
+    #       vtsched may be updated instantaneously after this call.
+    #    cur_scale - boolean array representing current scale
+    #    cur_chord - boolean array representing current chord
+    #    cur_bass - integer representing root of chord
+    #
+    display "play_a_measure", cur_beats_per_measure, cur_bps
+    display "    ", cur_scale, cur_chord, cur_bass
+    # Use EPSILON here because comparing floats for equality is not
+    #   reliable without very difficult analysis. So, instead of
+    #   x >= y, we write x + EPSILON > y
+    if cur_style == 'rock'
+
+        var total_beats = 0
+        var prev_pitch = nil
+        var prev_dur = nil
+        var octave = 12 * get_current_octave()
+        var max_tries = 100
+        var tries = 0
+        var eps = 0.0001
+
+        # Continue the rest of the measure with the Markov chain, only
+        # playing notes within the scale
+        # prev_dur = 0.25
+
+        var tm = get_current_tm()
+        prev_pitch = pick_starting_pitch(tm, cur_scale)
+        prev_dur = pick_starting_dur(tm, prev_pitch)
+        var to_be_played = []
+
+        sched_cause(0, midi_out, 'program',
+                    0, instrument)
+
+        while total_beats < cur_beats_per_measure and tries < max_tries:
+            var next_state = get_next_state(tm, [prev_pitch, prev_dur])
+            var next_pitch = next_state[0]
+            var next_dur = next_state[1]
+
+            sched_select(vtsched)
+            # TODO: Find out why this happens, I think it does not happen anymore
+            if prev_pitch == 0 and prev_dur == 0 and
+               next_pitch == 0 and next_pitch == 0:
+                print "Stuck in inf sequence of 0 duration notes, break"
+                tries = max_tries
+
+            elif cur_scale[next_pitch]:
+                # Have notes drag out slighly more so be more natural
+                var actual_dur = next_dur * get_current_drag_factor()
+
+                # Make sure the first note is always at velocity 100
+                var actual_vol = 100
+                # Notes not on a downbeat
+                if total_beats - int(total_beats) > eps:
+                    actual_vol = int(pr_normal(100, vol_sd))
+                sched_cause(total_beats, midi_out, 'note',
+                            0, next_pitch + octave, vel(actual_vol), actual_dur)
+                total_beats = total_beats + next_dur
+                tries = 0
+                to_be_played.append([PITCH_MAP[next_pitch], next_dur, actual_vol])
+            else:
+                tries = tries + 1
+            prev_pitch = next_pitch
+            prev_dur = next_dur
+
+        print "Playing:", to_be_played
+
+        if tries >= max_tries:
+            print "Exceeded max_tries, cannot find notes to play"

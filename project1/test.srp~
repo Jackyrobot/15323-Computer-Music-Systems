@@ -1,0 +1,32 @@
+require "debug"
+require "wxserpent"
+require "sched"
+require "midi-io"
+require "prefs"
+require "mididevice"
+
+
+player_id = 0
+
+start = Button(0, "Start", 5, 5, 75, 20)
+start.method = 'startit'
+stop = Button(0, "Stop", 5, 30, 75, 20)
+stop.method = 'stopit'
+
+def activity(i, id)
+    if(player_id != id): 
+      return
+    display "activity", i
+    sched_cause(0.5, nil, 'activity', i+1, id)
+
+def startit(rest ignore)
+  sched_cause(0.5, nil, 'activity', 0, player_id)
+
+def stopit(rest ignore)
+  player_id = player_id + 1
+
+sched_init()
+prefs = Prefs("homework3")
+midi_devices = Midi_devices(prefs)
+// the next line only for 1A, 1B, 1C, 1F, not for 1D or 1E
+// sched_cause(1, nil, 'activity', 0)

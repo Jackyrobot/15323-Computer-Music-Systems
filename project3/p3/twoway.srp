@@ -1,0 +1,73 @@
+# twoway.srp -- a test program to send to and receive from TouchOSC
+#
+# Roger Dannenberg
+# Feb 25, 2017
+
+# run this with serpent or serpent64 (not wxserpent)
+
+require "debug"
+
+# This is the O2 application name. Only O2 processes with the same
+# application name and same local area network can communicate, so
+# we make the application name easy to change.
+APPLICATION = "p3"
+
+# This is the service name for outgoing messages to TouchOSC
+TOUCHOSC = "touchosc"
+
+# Similarly, we make the service name easy to change here so that
+# this program can be modified to offer any O2 service. Note that
+# service names are assumed to be unique, so if you try to "snoop"
+# on messages to another service, you may interfere with that service.
+SERVICE = "p3"
+
+def full(osc_path)
+    # make a full O2 path based on SERVICE
+    return "/" + SERVICE + osc_path
+
+# same for outgoing messages: prepend TOUCHOSC service name
+def totouch(osc_path)
+    return "/" + TOUCHOSC + osc_path
+
+
+o2_initialize(APPLICATION, false)
+o2_service_new(SERVICE)
+// o2_debug_flags("O")
+o2_clock_set()
+PORT = 8001
+OUTGOING_PORT = 8002
+OUTGOING_IP = "192.168.1.39"
+
+rslt = o2_osc_port_new("p3", PORT, false)
+if rslt != 0 // an error occurred
+    display "in twoway, o2_osc_port_new returned ERROR", rslt
+else
+    print "Listening for TouchOSC messages on port", PORT
+    print "This program ONLY responds to /1/fader1, the left vertical"
+    print "    slider in the first panel of the TouchOSC \"simple\" layout."
+
+rslt = o2_osc_delegate(TOUCHOSC, OUTGOING_IP, OUTGOING_PORT, false)
+if rslt != 0 // an error occurred
+    display "in twoway, o2_osc_delegate returned ERROR", rslt
+else
+    print "Sending to TouchOSC at", OUTGOING_IP, "on port", OUTGOING_PORT
+
+### touchosc.srp OSC messages are redirected to /p3, e.g.
+### /p3/1/fader5, so install handler here (out goal in this
+### test is to forward changes to /1/fader1 to /1/fader2)
+o2_method_new(full("/1/fader1"), "f", 'fader1', true)
+
+// osc server functions. Put your code inside the functions
+def fader1(timestamp, address, types, val):
+    display "server /1/fader1", address, val
+    o2_send_start()
+    o2_add_float(val)
+    o2_send_finish(0.0, totouch("/1/fader2"), false)
+
+
+def run()
+    while true
+        o2_poll()
+        time_sleep(0.01)
+
+run()

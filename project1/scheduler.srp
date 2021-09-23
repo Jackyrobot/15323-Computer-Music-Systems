@@ -1,0 +1,19 @@
+# example1.srp - simple scheduler example
+#
+# run this with serpent64
+#
+# Roger B. Dannenberg
+# Jan 2018
+
+require "debug"
+require "sched"
+
+
+def activity(i):
+    display "activity", i, sched_rtime, time_get()
+    sched_cause(1, nil, 'activity', i + 1)
+
+
+sched_init()
+sched_cause(1, nil, 'activity', 101)
+sched_run()

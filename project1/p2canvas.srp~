@@ -1,0 +1,68 @@
+# p2canvas.srp -- example code showing a canvas
+#
+# Roger B. Dannenberg - Jan 2017
+
+require "debug"
+require "sched"
+require "wxserpent"
+
+// maybe global variables are not the best, but it's an easy
+// way to communicate from control code and the rendering code
+// in P2canvas's paint method:
+el_x = 10
+el_y = 10
+el_w = 50
+el_h = 20
+
+frame_count = 0
+
+class P2canvas (Canvas)
+    def paint(x)
+        el_x = 10 + p2slider.value() * 2
+        el_y = 10 + p2slider.value()
+        set_pen_rgb(100, 200, 120)
+        set_brush_rgb(100, 200, 120)
+        draw_ellipse(el_x, el_y, el_w, el_h)
+        frame_count = frame_count + 1
+
+
+// main sets up the window, then the scheduler, then 
+// starts some animation
+def main()
+    // P2canvas inherits the init() method from Canvas, which
+    // is the "constructor" in Serpent (like __init__ in Python):
+    default_window.set_size(640, 480)
+    p2canvas = P2canvas(default_window, 3, 3, 620, 380)
+
+    // add some interactive control: parent, min, max, init, x, y, w, h
+    p2slider = Slider(default_window, 0, 200, 100, 10, 400, 200, 20)
+    // add a label for the slider
+    Statictext(default_window, "Position", 220, 400, 150, 20)
+
+    sched_init()
+    // after a 1s delay (just to let things like window creation and 
+    //     drawing complete), start animating:
+    // note: time_get() will be reset to zero when scheduling is 
+    //     started, so scheduling here is relative to the scheduler
+    //     start time
+    sched_select(rtsched) // be explicit about which scheduler
+    sched_cause(1.0, nil, 'animate')
+
+
+def animate()
+    sched_cause(0.05, nil, 'animate') // 20 frames per second
+    // if we thought animation could become compute bound, it might
+    // be smart to check if we've fallen behind real time by more than
+    // one frame time (in which case 0.05s in the "future" relative to 
+    // scheduler time is actually already the past in real time, so
+    // animate() will be called back immediatly - we're compute bound).
+    // If we're that far behind, we could schedule the next frame in
+    // the near future, e.g. cause(real_delay(0.05), 'animate')
+    var i = frame_count % 100 // i goes 0 to 99
+    if i >= 50: i = 100 - i   // now i goes 0 to 50 and back to 0
+    el_w = 50 + i * 2
+    el_h = 20 + i
+    p2canvas.refresh(t) // tell canvas to redraw
+
+// don't forget to run main!
+main()

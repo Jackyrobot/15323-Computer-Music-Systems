@@ -1,0 +1,47 @@
+// 15-323 Project 1
+// Jacky Liu
+// jackyl1
+// Command line midi that takes in 2 inputs, tempo and count, and plays instruments at the given tempo (beats per minute) and count number of times.
+
+hat = 46
+snare = 38
+bass = 36
+
+print "Enter tempo (bpm): "
+tempo = int(stdin.readvalue())
+print "Enter count (repeats): "
+count = int(stdin.readvalue())
+
+beats = [[hat, bass], [hat], [hat, snare], [hat], [hat, bass], [hat], [hat, snare], [hat]]
+
+def midi_note_on(midi, chan, key, loud)
+    chan = chan & 15
+    midi_write(midi, 0, chr(0x90 + chan) + chr(key) + chr(loud))
+
+def main(tempo, count)
+	
+    var midi_out = midi_create() // create an unopened PortMidi stream
+    var midi_dev = midi_out_default() // find default device number
+
+    if midi_open_output(midi_out, midi_dev, 100, 10) != 0
+        print "Error opening default MIDI device for output"
+        return
+
+    display "sending first MIDI message", time_get()
+    var now = int(time_get() * 1000) 
+
+    for i = 0 to count // repeats to play count number of times
+        for elem in beats // each elem is a beat
+            now = int(now + 1/tempo * 60 * 1000 /2) 
+            for hit in elem
+                midi_note_on(midi_out, 9, hit, 100) 
+            time_sleep(now/1000 - time_get())
+            for hit in elem
+                midi_note_on(midi_out, 9, hit, 0)
+
+    display "last MIDI message sent", time_get()
+    time_sleep(1.0) // make sure all notes play before closing
+    midi_close(midi_out)
+
+
+main(tempo,count)

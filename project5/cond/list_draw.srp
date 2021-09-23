@@ -1,0 +1,188 @@
+require "wxserpent"
+require "debug"
+
+
+// A display of markers 
+//input to be expected from the user:
+// -----> dimension of canvas : x,y,w,h
+// -----> list of users to added
+// -----> number of columns required
+// -----> rectange selection box to be 1/5th of the size
+// -----> 
+
+// fields of user_info -- not sure why this is not a class
+SOLO = 0
+MUTE = 1
+NAME = 2
+VOL = 3
+
+LAST_LABEL = 2
+ITEM_HEIGHT = 16
+CHECK_BOX_WIDTH = 20
+VOL_CTRL_WIDTH = 10 // width for "<" and ">" volume controls
+VOL_WIDTH = 25 // width for volume number display, -90 to +90
+
+LOUDER_OFFSET = VOL_CTRL_WIDTH
+VOLUME_OFFSET = VOL_CTRL_WIDTH + VOL_WIDTH
+SOFTER_OFFSET = VOLUME_OFFSET + VOL_CTRL_WIDTH
+COL_LABELS = ["S", "M", "NAMES"]
+
+
+def alphabetical(a, b)
+    a[NAME] > b[NAME]
+
+
+class List_people (Canvas):
+    var width, height
+    var mouse_is_down
+    var items
+    var soloing
+    var muted
+
+    def sort_items()
+        items.sort('alphabetical')
+
+    def init(parent, x, y, w):
+        height = ITEM_HEIGHT
+        super.init(parent, x, y, w, height)
+        width = w - 1;
+        items = []
+        method = 'list_handler'
+        solo_count = 0
+    
+    def name_exists(name)
+        for item in items
+            if item[NAME] == name
+                return true
+        return false
+
+
+    def add_name(name):
+        if name == "cond" or name_exists(name)
+            return
+        var user_info = [false, true, name, 0] // , o2_time_get()] // initially muted
+        items.append(user_info)
+        super.set_height((len(items) + 1) * ITEM_HEIGHT)
+        refresh(t)
+
+
+    def remove_name(name)
+        for item at i in items
+            if item[NAME] == name
+                items.uninsert(i)
+                refresh(t)
+                super.set_height((len(items) + 1) * ITEM_HEIGHT)                
+                return
+
+
+    def paint(x):
+        var bottom = (len(items) + 1) * ITEM_HEIGHT
+        if get_os() == 'windows':
+            set_font(8, 0, 0, 0, nil, "")
+        set_pen_color("BLACK")
+        draw_line(0, ITEM_HEIGHT, width, ITEM_HEIGHT)
+        set_pen_color("LIGHT GREY")
+        // draw vertical lines for checkboxes
+        for i = 0 to len(COL_LABELS)
+            draw_line(CHECK_BOX_WIDTH * i, 0, 
+                      CHECK_BOX_WIDTH * i, bottom)
+        // draw vertical line to right of name column
+        draw_line(width, 0, width, bottom)
+        // draw vertical lines at right of names
+        draw_line(width - LOUDER_OFFSET, ITEM_HEIGHT, 
+                  width - LOUDER_OFFSET, bottom)
+        draw_line(width - VOLUME_OFFSET, ITEM_HEIGHT, width - VOLUME_OFFSET, bottom)
+        draw_line(width - SOFTER_OFFSET, ITEM_HEIGHT, 
+                  width - SOFTER_OFFSET, bottom)
+        // draw line above column headings
+        draw_line(0, 0, width, 0)
+        // note: every other horizontal line is above the row
+        // write column headings
+        for label at i in COL_LABELS
+            draw_text(CHECK_BOX_WIDTH * i + 5, -1, label)
+
+        var y = ITEM_HEIGHT // start below labels
+        for item at i in items
+            if type(item[NAME]) != 'String'
+                display "ERROR!!", i, item, len(items), item[NAME]
+            draw_text(CHECK_BOX_WIDTH * 2 + 3, y - 1, item[NAME])
+            for col = 0 to LAST_LABEL
+                if item[col] 
+                    draw_cross_mark(CHECK_BOX_WIDTH * col, y, 
+                                    CHECK_BOX_WIDTH, ITEM_HEIGHT)
+            // draw volume and controls
+            draw_text(width - (SOFTER_OFFSET - 1), y - 1, "<")
+            draw_text(width - (VOLUME_OFFSET -1),  y - 1, volstr(item[VOL]))
+            draw_text(width - (LOUDER_OFFSET - 1), y - 1, ">")
+            y = y + ITEM_HEIGHT
+            draw_line(0, y, width, y) // line is *below* the row
+
+    def volstr(v)
+        if v == 0
+            return "   0"
+        var vstr = str(abs(v))
+        if len(vstr) < 2:
+            vstr = "0" + vstr
+        return ("-" if v < 0 else "+") + vstr
+
+    def draw_cross_mark(x , y, w, h):
+        set_brush_color("INDIAN RED",10)
+        draw_rectangle(x, y, w, h)
+         
+    def player_list_mouse_handler(x, y):
+        if y < 0 or y >= (len(items) + 1) * ITEM_HEIGHT
+            return
+        var row = int(y / ITEM_HEIGHT) - 1
+        if x >= 0 and x < CHECK_BOX_WIDTH * 2
+            var col = int(x / CHECK_BOX_WIDTH)
+            check_if_marked(row, col)
+            refresh(t)
+        elif x > width - LOUDER_OFFSET and x < width
+            bump_volume(row, 5)
+        elif x > width - SOFTER_OFFSET and x < width - VOLUME_OFFSET
+            bump_volume(row, -5)
+
+
+    def check_if_marked(i, j):
+        var beat = safely_in_the_future()
+        if i == -1 and j == 0: // soloing
+            soloing = not soloing
+            for item in items
+                item[SOLO] = soloing
+        elif i == -1 and j == 1: // muted
+            muted = not muted
+            for item in items
+                item[MUTE] = muted
+        else:
+            items[i][j] = not items[i][j]
+                
+    def bump_volume(i, amt):
+        if i < 0 or i >= len(items):
+            return
+        var item = items[i]
+        var vol = min(max(item[VOL] + amt, -90), 90)
+        item[VOL] = vol
+        send_volume_to(item[NAME], vol)
+        refresh(t)
+
+    
+    // TODO : Make checked_boxes a UNIQUE Set:
+def list_handler(obj, event, x, y):
+    if event == WXS_LEFT_DOWN or event == WXS_LEFT_DCLICK
+        display "list_handler", event
+        obj.player_list_mouse_handler(x, y)
+
+
+// Make sure while entering :
+// ------- > Include the column for the "users" always
+        
+def demo():
+    items = ["SAM", "JOHN", "RAHU", "ZAP", "LEMON"];
+    labels = ["M", "S", "D", "P", "Q", "USERS"]
+    mylist = List_people(0, labels, items, 100, 5, 160, 127)
+#display mylist.locs
+
+#demo()
+
+
+

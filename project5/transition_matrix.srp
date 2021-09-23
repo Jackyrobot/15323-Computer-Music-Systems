@@ -1,0 +1,229 @@
+require "debug"
+require "allegro"
+require "readcsv"
+require "strparse"
+
+def sum_row(arr):
+    var sum = 0
+    for val in arr:
+        sum = sum + val
+    return sum
+
+def log2(x):
+    log(real(x)) / log(real(2))
+
+def round_nearest_pow_2(x):
+    return 2 ** int(round(log2(x)))
+
+def num_increasing(x, y):
+    x > y
+
+def union(x, y):
+    var result = x.copy()
+    for elem in y:
+        if result.index(elem) == -1:
+            result.append(elem)
+    return result.sort('num_increasing')
+
+class TransitionMatrix:
+    var mat
+    var durs
+
+    def init(optional track = nil):
+        if track != nil:
+            mat = learn(track)
+        else:
+            mat = nil
+            durs = nil
+
+    def empty(length):
+        return [[0 for j = 0 to length] for i = 0 to length]
+
+    def normalize(in_mat):
+        var out_mat = in_mat.copy()
+        var n_states = 12 * len(durs)
+
+        for i = 0 to n_states:
+            var sum = sum_row(out_mat[i])
+
+            # Normalize the row
+            if sum != 0:
+                for j = 0 to n_states:
+                    out_mat[i][j] = out_mat[i][j] / sum
+
+        return out_mat
+
+    def process_dur(dur, optional round_dur = false):
+        var d = dur
+        # NOTE: Ignore all the rests, we just want the fractional intervals
+        if d > 1.0:
+            d = d - int(d)
+        if round_dur:
+            d = round_nearest_pow_2(d)
+        # NOTE: Treat very small durations as 0
+        if d < (1.0 / 64.0):
+            d = 0
+        return d
+
+    def dur_frequencies(track, optional round_durs = false):
+        var dur_counts = {}
+        for note in track:
+            if isinstance(note, Alg_note):
+                d = process_dur(note.dur, round_durs)
+                if d > 1:
+                    if not dur_counts.has_key(d):
+                        dur_counts[d] = 0
+                    dur_counts[d] = dur_counts[d] + 1
+        return dur_counts
+
+    def state_to_idx(state):
+        var pitch = state[0]
+        var dur = state[1]
+
+        var i = pitch
+        var j = durs.index(dur)
+        if j == -1:
+            print "WARNING: Invalid duration in state_to_idx", dur, durs
+            return -1
+        return i * len(durs) + j
+
+    def idx_to_state(idx):
+        var pitch = int(idx / len(durs))
+        var dur = durs[idx % len(durs)]
+        return [pitch, dur]
+
+    def pitch_can_transition(pitch):
+        for dur in durs:
+            if sum_row(mat[state_to_idx([pitch, dur])]) > 0:
+                return true
+        return false
+
+    def learn(track, optional key_pitch = 0):
+        var dur_freqs = dur_frequencies(track, true)
+        durs = dur_freqs.keys().sort('num_increasing')
+
+        # 2D array of pitches
+        var n_states = 12 * len(durs)
+        var result_mat = empty(n_states)
+
+        # Count transitions
+        var prev_state = nil
+        for note in track:
+            if isinstance(note, Alg_note):
+                var curr_note = (note.key - key_pitch) % 12
+                var curr_dur = process_dur(note.dur, true)
+                var curr_state = [curr_note, curr_dur]
+
+                if curr_dur > 0:
+                    if prev_state != nil:
+                        var prev_idx = state_to_idx(prev_state)
+                        var curr_idx = state_to_idx(curr_state)
+                        result_mat[prev_idx][curr_idx] = result_mat[prev_idx][curr_idx] + 1
+                    prev_state = curr_state
+
+        return normalize(result_mat)
+
+    def combine(other_tm, optional other_weight = 0.5):
+        var new_tm = TransitionMatrix()
+
+        # New transition matrix has union of states
+        new_tm.durs = union(durs, other_tm.durs)
+        var new_n_states = 12 * len(new_tm.durs)
+        new_tm.mat = new_tm.empty(new_n_states)
+
+        var w = 1 - other_weight
+        var ow = other_weight
+
+        for prev_pitch = 0 to 12:
+            for prev_dur in new_tm.durs:
+                for next_pitch = 0 to 12:
+                    for next_dur in new_tm.durs:
+                        var prev_state = [prev_pitch, prev_dur]
+                        var next_state = [next_pitch, next_dur]
+
+                        # Check if transition is represented in each original array
+                        var in_curr = (durs.index(prev_dur) != -1) and
+                                      (durs.index(next_dur) != -1)
+                        var in_other = (other_tm.durs.index(prev_dur) != -1) and
+                                       (other_tm.durs.index(next_dur) != -1)
+
+                        # Individual table indexes as each matrix has different mappings
+                        var ntm_from = new_tm.state_to_idx(prev_state)
+                        var ntm_to = new_tm.state_to_idx(next_state)
+                        if in_curr:
+                            var tm_from = state_to_idx(prev_state)
+                            var tm_to = state_to_idx(next_state)
+                        if in_other:
+                            var otm_from = other_tm.state_to_idx(prev_state)
+                            var otm_to = other_tm.state_to_idx(next_state)
+
+                        # Both matrices support this transition
+                        if in_curr and in_other:
+                            new_tm.mat[ntm_from][ntm_to] = w * mat[tm_from][tm_to] +
+                                                           ow * other_tm.mat[otm_from][otm_to]
+
+                        # Only current tm supports this transition
+                        elif (in_curr and not in_other):
+                            new_tm.mat[ntm_from][ntm_to] = w * mat[tm_from][tm_to]
+
+                        # Only other tm supports this transition
+                        elif (not in_curr and in_other):
+                            new_tm.mat[ntm_from][ntm_to] = ow * other_tm.mat[otm_from][otm_to]
+
+                        # Neither matrix fully supports this transition
+                        else:
+                            new_tm.mat[ntm_from][ntm_to] = 0
+
+        # print "Before normalize:"
+        # for row in new_tm.mat
+        #     print sum_row(row)
+        new_tm.mat = new_tm.normalize(new_tm.mat)
+        # print "After normalize:"
+        # for row in new_tm.mat
+        #     print sum_row(row)
+
+        return new_tm
+
+    def serialize_row(row):
+        joined = flatten([str(x) + "," for x in row])
+        return subseq(joined, 0, len(joined) - 1)
+
+    def write(filename):
+        # Write to CSV, column names are states
+        var out_file = open(filename, "w")
+        var headers = []
+        for pitch = 0 to 12:
+            for dur in durs:
+                headers.append(str(pitch) + "|" + str(dur))
+        out_file.write(serialize_row(headers) + "\n")
+        out_file.writelines([serialize_row(row) + "\n" for row in mat])
+        out_file.flush()
+        out_file.close()
+
+    def read(filename):
+        # Read from CSV, column names are states
+        var temp_data = readcsv(filename, false, true)
+        var headers = temp_data[0]
+        var temp_mat = subseq(temp_data, 1, len(temp_data))
+
+        # Parse durations
+        durs = []
+        var i = 0
+        var pitch = 0
+        while pitch != 1:
+            var header = headers[i]
+            var parse = String_parse(header)
+            pitch = int(parse.get_integer())
+            parse.skip("|")
+            var dur = real(parse.get_real())
+            if pitch == 0:
+                durs.append(dur)
+            i = i + 1
+
+        # Parse probabilities
+        n_states = len(headers)
+        mat = empty(n_states)
+        for i = 0 to n_states:
+            for j = 0 to n_states:
+                mat[i][j] = real(temp_mat[i][j])
+

@@ -1,0 +1,51 @@
+require "debug"
+require "allegro"
+require "mfread"
+require "transition_matrix"
+
+CLASS_TO_NOTE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+def warning(msg)
+    print "*** "; msg
+
+# print the notes in seq
+def show_note(note)
+    print "time: "; note.time; " chan: "; note.chan; 
+    print " keyno: "; note.key; " vel: "; note.loud; " pitch: "; CLASS_TO_NOTE[note.key % 12]; " dur: "; note.dur
+
+def track_num_notes(track):
+    return len([note for note in track if isinstance(note, Alg_note)])
+
+def main():
+    # var midi_file_path = wxs_file_selector("Open a Standard MIDI File", 
+    #                          "", "", ".mid", "*.mid", WXS_FILE_OPEN, 0)
+    # print "Opening", midi_file_path
+    # seq = allegro_smf_read(midi_file_path)
+    # if not seq
+    #     print "Could not read", midi_file_path
+    #     exit()
+
+    # # convert seq times to beats
+    # seq.convert_to_beats()
+    # # seq.convert_to_seconds()
+
+    # print "Which track to learn from?"
+    # for track at tr in seq.tracks:
+    #     if track_num_notes(track) > 0:
+    #         print str(tr) + " has " + str(track_num_notes(track)) + " notes"
+    #         tm = TransitionMatrix(track)
+    #         print(tm.mat)
+    #         # for note in track:
+    #         #     if isinstance(note, Alg_note):
+    #         #         show_note(note)
+    # exit()
+    tm1 = TransitionMatrix()
+    tm2 = TransitionMatrix()
+    tm1.read("tetris.csv")
+    tm2.read("usanthem.csv")
+    tm = tm1.combine(tm2, 0)
+    # display tm.durs
+    # display tm.mat
+
+
+main()

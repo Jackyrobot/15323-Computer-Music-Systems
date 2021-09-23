@@ -1,0 +1,3 @@
+def play_sequence()
+  play_note()
+  schedule(rtsched_time + 0.5, 'play sequence')

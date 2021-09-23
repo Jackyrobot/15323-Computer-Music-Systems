@@ -1,0 +1,337 @@
+# Project 2. Scheduling, MIDI, Graphics
+# Jacky Liu
+# jackyl1
+# based on wxmidictrl.
+# Features: 
+# Start and Stop
+# Adjustable Period
+# Adjustable Velocity
+# Choice between Major, Major7th, minor, dominant for chord and 12 notes 
+# Plays 2 chords at the same time.
+# Implementation: Chords and Notes are based on a dictionary. 
+# The dictionary for chords contains each chord mapped to a list of values that shift the interval.
+# The dictionary for notes contains each note mapped to its numerical value in midi.
+
+
+require "debug"
+require "wxserpent"
+require "sched"
+require "midi-io"
+require "prefs"
+require "mididevice"
+require "slider"
+
+
+//////////////////////////////////////////////
+// GLOBAL VARIABLES
+//////////////////////////////////////////////
+
+
+APPLICATION = "p3"
+SERVICE = "p3"
+PORT = 8213
+
+global_vel = -1
+global_period = -1
+global_vel_2 = -1
+global_shift = 0
+global_shift_2 = 0
+global_octave = 0
+global_octave_2 = 0
+global_chord = "None"
+started = false
+started2 = false
+
+///////////////////////////////////////////////////
+// TOUCHOSC CODE
+///////////////////////////////////////////////////
+
+
+# make a full path with SERVICE prefix
+def full(osc_path)
+    # make a full O2 path based on SERVICE
+    return "/" + SERVICE + osc_path
+
+o2_initialize(APPLICATION, false)
+o2_service_new(SERVICE)
+o2_clock_set()
+
+def install_generic_handler()
+    print "Listening for all OSC messages to port", PORT
+    o2_method_new("/" + SERVICE, nil, 'generic_handler', false)
+
+def install_handlers()
+    o2_method_new(full("/faderM"), "f", 'sliderM', true)  # Gray Slider, for adjusting the 
+
+    o2_method_new(full("/1/faderA"), "f", 'sliderA', true) # Green slider, for adjusting volume 1
+    o2_method_new(full("/1/faderB"), "f", 'sliderB', true) # Red Slider, for adjusting volume 2
+
+    o2_method_new(full("/toggleA_1"), "f", 'button1', true) # Left Green button, for starting
+    o2_method_new(full("/toggleB_1"), "f", 'button3', true) # Left Red button, for stopping
+
+    o2_method_new(full("/1/faderC"), "f", 'slider3', true) # Blue slider, for changing the note of the chord 1 (From C to B)
+    o2_method_new(full("/1/faderD"), "f", 'slider4', true) # Yellow slider, for changing the note of the chord 2 (From C to B)
+
+    o2_method_new(full("/1/rotaryC"), "f", 'circle3', true) # Blue Rotary, for adjusting octave of sound 1
+    o2_method_new(full("/1/rotaryD"), "f", 'circle4', true) # Yellow Rotary, for adjusting octave of sound 2
+
+    o2_method_new(full("/toggleC_1"), "f", 'button5', true) # Sets current chord to Major scale (sound 1)
+    o2_method_new(full("/toggleC_2"), "f", 'button6', true) # Sets current chord to Major 7th scale (sound 1)
+    o2_method_new(full("/toggleD_1"), "f", 'button7', true) # Sets current chord to Minor scale (sound 1)
+    o2_method_new(full("/toggleD_2"), "f", 'button8', true) # Sets current chord to Dominant scale (sound 1)
+
+////////////////////////////////////////////////
+// Sliders
+////////////////////////////////////////////////
+currentM = -1
+def sliderM(timestamp, address, types, val)
+    global_period = val
+    sched_select(vtsched)
+    sched_set_period(global_period + 0.05)
+    print "Global Tempo (BPS) = ", (1/(global_period + 0.05))
+
+current1 = -1
+def sliderA(timestamp, address, types, val)
+    # print "sliderA val = ", val
+    global_vel = val
+    if(current1 != global_vel) # These if statements are used to prevent console from printing
+        current1 = global_vel  # the same values repeatedly in a span of 1 ms.
+        print "Velocity of Sound 1 = ", int(global_vel*127)
+
+current2 = -1
+def sliderB(timestamp, address, types, val)
+    global_vel_2 = val
+    if current2 != global_vel_2:
+        current2 = global_vel_2
+        print "Velocity of Sound 2 ", int(global_vel*127)
+
+def slider3(timestamp, address, types, val)
+    global_shift = int(val * 12)
+
+def slider4(timestamp, address, types, val)
+    global_shift_2 = int(val * 12)
+
+////////////////////////////////////////////////
+// Buttons
+////////////////////////////////////////////////
+
+def button1(timestamp, address, types, val)
+    print "STARTED"
+    if started == false:
+        start()
+        started = true
+
+def button3(timestamp, address, types, val)
+    print "STOPPED"
+    stop()
+    started = false
+    started2 = false
+
+def button5(timestamp, address, types, val)
+    global_chord = "Major"
+    print "Currently Playing Chord (Sound 1): Major"
+
+def button6(timestamp, address, types, val)
+    global_chord = "Major 7th"
+    print "Currently Playing Chord (Sound 1): Major 7th"
+
+def button7(timestamp, address, types, val)
+    global_chord = "Minor"
+    print "Currently Playing Chord (Sound 1): Minor"
+
+def button8(timestamp, address, types, val)
+    global_chord = "Dominant"
+    print "Currently Playing Chord (Sound 1): Dominant"
+
+////////////////////////////////////////////////
+// Rotaries
+////////////////////////////////////////////////
+
+current5 = -1
+def circle3(timestamp, address, types, val)
+    global_octave = 12*int((val*4)-2)
+    if current5 != int(val*4)+2
+        current5 = int(val*4)+2
+        print "Sound 1 is currently playing octave: ", int(val*4)+2
+
+current6 = -1
+def circle4(timestamp, address, types, val)
+    global_octave_2 = 12*int((val*4)-2)
+    if current5 != int(val*4)+2
+        current5 = int(val*4)+2
+        print "Sound 2 is currently playing octave: ", int(val*4)+2
+
+////////////////////////////////////////////////
+// Initialization for server code
+////////////////////////////////////////////////
+
+if len(command_line_arguments) > 1 and
+   command_line_arguments[1] == "d" // set up for donttouchosc
+    install_donttouchosc_handlers()
+else
+    if len(command_line_arguments) > 1 and
+       isdigit(command_line_arguments[1])
+        osc_port = int(command_line_arguments[1])
+    # install_generic_handler()
+    install_handlers()
+
+rslt = o2_osc_port_new(SERVICE, PORT, false)
+if rslt != 0 // an error occurred
+    display "in int.srp, o2_osc_port_new returned ERROR", rslt
+
+# def fader1_handler (time, address, types, float_param)
+#     display "fader1_handler", time, address, types, float_param
+
+
+/////////////////////////////////////////////////////////////////////
+// PROJECT 2 CODE (Has been slightly modified to work with TouchOSC)
+/////////////////////////////////////////////////////////////////////
+
+# Chords based on Arpeggiator
+CHORDS = {
+    "Major" : [0,4,7],
+    "Major 7th" : [0,4,7,11],
+    "Minor" : [0,3,7],
+    "Dominant" : [0,4,7,10]
+}
+# Notes from 60-72
+NOTES = {
+    "C" : 60,
+    "C#" : 61,
+    "D" : 62,
+    "D#" : 63,
+    "E" : 64,
+    "F" : 65,
+    "F#" : 66,
+    "G" : 67,
+    "G#" : 68,
+    "A" : 69,
+    "A#" : 70,
+    "B" : 71
+    }
+
+player_id = 0 // use "stopping a thread" pattern
+# player_id_2 = 0
+
+def activity(id, p, note, chord):
+    # major = [0,4,7,11]
+    note_t = NOTES[note]
+    chord_t = CHORDS[chord]
+
+    # Changes chord of first sound depending on slider from TouchOSC
+    if global_chord == "Major":
+        chord_t = CHORDS["Major"]
+    elif global_chord == "Major 7th":
+        chord_t = CHORDS["Major 7th"]
+    elif global_chord == "Minor":
+        chord_t = CHORDS["Minor"]
+    elif global_chord == "Dominant":
+        chord_t = CHORDS["Dominant"]
+
+    # Changes velocity (volume) depending on slider from TouchOSC
+    var vel = int(velocity.value())
+    if global_vel >=0:
+        vel = int(global_vel*127)
+
+    midi_out.note_on(0, global_octave + global_shift + note_t + (chord_t[p % len(chord_t)]), 0)
+
+    if id != player_id: // stop AFTER note-off
+        return
+
+    midi_out.note_on(0, global_octave + global_shift + note_t + (chord_t[p % len(chord_t)]), vel)
+
+    p = p + 1
+    sched_cause(1, nil, 'activity', id, p, note, chord)
+
+
+def activity_2(id, p, note, chord):
+    note_t = NOTES[note]
+    chord_t = CHORDS[chord]
+
+    var vel = int(velocity.value())
+    if global_vel_2 >=0:
+        vel = int(global_vel_2*127)
+
+    midi_out.note_on(0, global_octave_2 + global_shift_2 + note_t + (chord_t[p % len(chord_t)]), 0)
+
+    if id != player_id: // stop AFTER note-off
+        return
+
+    midi_out.note_on(0, global_octave_2 + global_shift_2 + note_t + (chord_t[p % len(chord_t)]), vel)
+
+    p = p + 1
+    sched_cause(1, nil, 'activity_2', id, p, note, chord)
+
+# Starts playing
+def start(rest ignore)
+    sched_o2_enabled = true
+    sched_cause(1, nil, 'activity', player_id, 0, menu2.value(), menu1.value())
+    sched_cause(1, nil, 'activity_2', player_id, 0, menu4.value(), menu3.value())
+
+# Stops playing
+def stop(rest ignore)
+    player_id = player_id + 1
+
+
+Button(0, "Start", 5, 5, 60, 20).method = 'start'
+Button(0, "Stop", 65, 5, 60, 20).method = 'stop'
+
+
+def set_period(obj, x):
+    display "set_period", obj, x
+    sched_select(vtsched)
+    print global_period
+    if global_period < 0:
+        sched_set_period(x)
+    else
+        sched_set_period(global_period*5) # Sets global period if the slider on TouchOSC is used
+
+Statictext(WXS_DEFAULT_WINDOW, "Please select first chord: ", 5, 80, 400, 20)
+Statictext(WXS_DEFAULT_WINDOW, "Please select 2nd chord: ", 5, 180, 400, 20)
+
+# Creates the slider to adjust period
+period = Labeled_slider(0, "Period", 5, 30, 250, 20,
+                        70, 0.05, 5, 0.2, 'exponential')
+period.method = 'set_period'
+
+
+# Creates the sllider to adjust velocity
+velocity = Labeled_slider(0, "Velocity", 5, 55, 250, 20,
+                          70, 1, 127, 100, 'linear')
+
+
+# Creates the first drop down menu for the first chord
+menu1 = Choice(default_window, 5, 100, 100, 30)
+for i = 0 to len(CHORDS)
+    menu1.append(CHORDS.keys()[i])
+menu1.set_value(CHORDS.keys()[0])
+#creates the first choice of notes for the first chord
+menu2 = Choice(default_window, 5, 140, 100, 30)
+for i = 0 to len(NOTES)
+    menu2.append(NOTES.keys()[i])
+menu2.set_value(NOTES.keys()[0])
+# creates the 2nd drop down menu for the 2nd chord
+menu3 = Choice(default_window, 5, 200, 100, 30)
+for i = 0 to len(CHORDS)
+    menu3.append(CHORDS.keys()[i])
+menu3.set_value(CHORDS.keys()[0])
+# creates the 2nd choice of notes for the 2nd chord
+menu4 = Choice(default_window, 5, 240, 100, 30)
+for i = 0 to len(NOTES)
+    menu4.append(NOTES.keys()[i])
+menu4.set_value(NOTES.keys()[0])
+
+
+sched_init() // creates vtsched and rtsched
+prefs = Prefs("./prefs.txt")
+midi_devices = Midi_devices(prefs, open_later = true) 
+success = midi_devices.open_midi(latency = 10, device = 'midi_out_device') 
+if not success 
+    print "PLEASE SELECT A VALID OUTPUT DEVICE AND RESTART THIS PROGRAM"
+else 
+    sched_o2_enabled = true
+    sched_select(vtsched)
+    sched_set_period(0.2)
+    # sched_cause(real_delay(5), nil, 'activity', player_id, 0)
+
+# o2_poll()
